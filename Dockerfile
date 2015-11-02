@@ -82,11 +82,23 @@ else \n\
 --hostname $X64_HOSTMANE \
 --name $X64_HOSTMANE \
 --link `hostname`:$X64_HOSTMANE \
--v /shared/Downloads:/home/user/Downloads \
+-v /shared/user:/home/user \
 alexagency/centos6-workstation-x64" \n\
 fi \n '\
 >> /home/user/.bashrc && \
     shopt -s expand_aliases
+
+# Firefox x86
+RUN echo -e '\
+[Desktop Entry]\n\
+Encoding=UTF-8\n\
+Name=Firefox\n\
+Exec=firefox %u\n\
+Icon=firefox\n\
+Terminal=false\n\
+Type=Application\n\
+Categories=Network;WebBrowser;'\
+>> /usr/share/applications/firefox.desktop
 
 # Firefox x64
 RUN echo -e '\
@@ -94,11 +106,25 @@ RUN echo -e '\
 Encoding=UTF-8\n\
 Name=Firefox x64\n\
 Exec=sh -c "source /home/user/.bashrc;eval workstation-x64 firefox"\n\
-Icon=gnome-panel-fish\n\
+Icon=firefox\n\
 Terminal=true\n\
 Type=Application\n\
 Categories=Network;WebBrowser;'\
 >> /usr/share/applications/firefox-x64.desktop
+
+# Eclipse x86
+RUN echo -e '\
+[Desktop Entry]\n\
+Encoding=UTF-8\n\
+Name=Eclipse\n\
+Comment=Eclipse\n\
+Exec=eclipse\n\
+Icon=/usr/eclipse/icon.xpm\n\
+Categories=Application;Development;Java;IDE\n\
+Version=1.0\n\
+Type=Application\n\
+Terminal=false'\
+>> /usr/share/applications/eclipse.desktop
 
 # Eclipse x64
 RUN echo -e '\
@@ -114,16 +140,9 @@ Type=Application\n\
 Terminal=true'\
 >> /usr/share/applications/eclipse-x64.desktop
 
-# Visual VM x64
-RUN echo -e '\
-[Desktop Entry]\n\
-Encoding=UTF-8\n\
-Name=Visual VM x64\n\
-Comment=Visual VM\n\
-Exec=sh -c "source /home/user/.bashrc;eval /usr/java/latest/bin/jvisualvm"\n\
-Icon=gnome-panel-fish\n\
-Categories=Application;Development;Java\n\
-Version=1.0\n\
-Type=Application\n\
-Terminal=true'\
->> /usr/share/applications/jvisualvm-x64.desktop
+# Default user
+USER user
+ENV HOME /home/user
+
+# Entrypoint
+CMD ["sudo", "supervisord"]
