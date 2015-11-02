@@ -30,7 +30,7 @@ cd /c/Users/<WINDOWS USER>
 
 Run **alexagency/centos6-workstation-x86** container from [Docker Hub](https://hub.docker.com/r/alexagency/centos6-workstation-x86/) with docker inside:
 ```
-docker run -it --rm -p 5900:5900 -p 3389:3389 -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/bin/docker alexagency/centos6-workstation-x86
+docker run -it --rm -p 5900:5900 -p 3389:3389 -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/bin/docker -v /shared:/home/user/shared alexagency/centos6-workstation-x86
 ```
 
 Open via VNC or RDP client using virtual maschine's ip-address:
