@@ -5,9 +5,9 @@ USER root
 
 RUN yum -y update && \
     yum -y install xorg-x11-server-utils which prelink git wget tar bzip2 meld \
-        firefox*i686 glibc.i686 libgcc.i686 gtk2*.i686 libXtst*.i686 alsa-lib-1.*.i686 \
-        dbus-glib-0.*.i686 libXt-1.*.i686 gtk2-engines gtk2-devel && \
-    yum clean all && rm -rf /tmp/*
+        firefox*i686 libXtst-devel.i686 gtk2.i686 gtk2-engines.i686 gtk2-devel.i686 && \
+    yum clean all && rm -rf /tmp/* && \
+    touch /var/lib/dbus/machine-id && dbus-uuidgen > /var/lib/dbus/machine-id
 
 # JDK x86
 ENV JDK_URL http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-linux-i586.rpm
@@ -68,21 +68,34 @@ RUN echo "xhost +" >> /home/user/.bashrc && \
     echo "alias docker='sudo docker'" >> /home/user/.bashrc && \
     echo -e '\
 alias dockerX11run="docker run -ti --rm \
---add-host=localhost:`hostname --ip-address` \
 -e DISPLAY=`hostname --ip-address`$DISPLAY" '\
 >> /home/user/.bashrc && \
     echo -e '\n\
-X64_HOSTMANE=`hostname`-x64 \n\
-X64_RUNNING=$(docker inspect -f {{.State.Running}} $X64_HOSTMANE 2> /dev/null) \n\
+X64=`hostname`-x64 \n\
+X64_RUNNING=$(docker inspect -f {{.State.Running}} $X64 2> /dev/null) \n\
 if [ "$X64_RUNNING" == "true" ]; then \n\
-    alias workstation-x64="docker exec -ti $X64_HOSTMANE" \n\
+    alias workstation-x64="docker exec -ti $X64" \n\
 else \n\
     alias workstation-x64="dockerX11run \
---hostname $X64_HOSTMANE \
---name $X64_HOSTMANE \
---link `hostname`:$X64_HOSTMANE \
+--hostname $X64 \
+--name $X64 \
+--link `hostname`:$X64 \
 -v /shared:/home/user/Public \
 alexagency/centos6-workstation-x64" \n\
+fi \n '\
+>> /home/user/.bashrc && \
+    echo -e '\n\
+CENTOS7_X86=`hostname`-centos7-x86 \n\
+CENTOS7_X86_RUNNING=$(docker inspect -f {{.State.Running}} $CENTOS7_X86 2> /dev/null) \n\
+if [ "$CENTOS7_X86_RUNNING" == "true" ]; then \n\
+    alias centos7-x86="docker exec -ti $CENTOS7_X86" \n\
+else \n\
+    alias centos7-x86="dockerX11run \
+--hostname $CENTOS7_X86 \
+--name $CENTOS7_X86 \
+--link `hostname`:$CENTOS7_X86 \
+-v /shared:/home/user/Public \
+alexagency/centos7-jdk-x86" \n\
 fi \n '\
 >> /home/user/.bashrc && \
     shopt -s expand_aliases
@@ -97,6 +110,28 @@ command=/etc/init.d/startup restart \n\
 stderr_logfile=/var/log/supervisor/startup-error.log \n\
 stdout_logfile=/var/log/supervisor/startup.log "\ 
 > /etc/supervisord.d/startup.conf
+
+# Terminal x64
+RUN echo -e "\
+[Desktop Entry]\n\
+Name=Terminal x64\n\
+Exec=sh -c 'source /home/user/.bashrc;eval workstation-x64 bash'\n\
+Icon=utilities-terminal\n\
+Type=Application\n\
+Terminal=true\n\
+Categories=GNOME;GTK;Utility;TerminalEmulator;System;"\
+>> /usr/share/applications/terminal-x64.desktop
+
+# Terminal Centos7
+RUN echo -e "\
+[Desktop Entry]\n\
+Name=Terminal Centos7\n\
+Exec=sh -c 'source /home/user/.bashrc;eval centos7-x86 bash'\n\
+Icon=utilities-terminal\n\
+Type=Application\n\
+Terminal=true\n\
+Categories=GNOME;GTK;Utility;TerminalEmulator;System;"\
+>> /usr/share/applications/terminal-centos7.desktop
 
 # Firefox x86
 RUN echo -e "\
@@ -123,6 +158,17 @@ Type=Application\n\
 Categories=Network;WebBrowser;"\
 >> /usr/share/applications/firefox-x64.desktop
 
+# Firefox x86 Centos7 
+RUN echo -e "\
+[Desktop Entry]\n\
+Name=Firefox x86 Centos7\n\
+Exec=sh -c 'source /home/user/.bashrc;eval centos7-x86 firefox'\n\
+Icon=firefox\n\
+Terminal=true\n\
+Type=Application\n\
+Categories=Network;WebBrowser;"\
+>> /usr/share/applications/firefox-x86-centos7.desktop
+
 # Eclipse x86
 RUN echo -e "\
 [Desktop Entry]\n\
@@ -147,6 +193,17 @@ Categories=Application;Development;Java;IDE\n\
 Type=Application\n\
 Terminal=true"\
 >> /usr/share/applications/eclipse-x64.desktop
+
+# Eclipse x86 Centos7
+RUN echo -e "\
+[Desktop Entry]\n\
+Name=Eclipse x86 Centos7\n\
+Exec=sh -c 'source /home/user/.bashrc;eval centos7-x86 eclipse'\n\
+Icon=/usr/eclipse/icon.xpm\n\
+Categories=Application;Development;Java;IDE\n\
+Type=Application\n\
+Terminal=true"\
+>> /usr/share/applications/eclipse-x86-centos7.desktop
 
 # Default user
 USER user
